@@ -19,7 +19,7 @@ class ClubSpider(scrapy.Spider):
         ]
     
     def parse(self,response: Response, **kwargs):
-        league_list = response.xpath('//table/tbody/tr/td*[@data-stat="year_id"]/a/@href')
+        league_list = response.xpath('//table/tbody/tr/td*[@data-stat="year_id"]/a/@href').extract()
         for league in league_list:
             yield Request(
                 'https://fbref.com'+league,

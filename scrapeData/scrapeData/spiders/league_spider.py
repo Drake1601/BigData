@@ -17,7 +17,7 @@ class LeagueSpider(scrapy.Spider):
         ]
 
     def parse(self,response: Response, **kwargs):
-        season_list = response.xpath('//table/tbody/tr/td*[@data-stat="year_id"]/a/@href')
+        season_list = response.xpath('//table/tbody/tr/td*[@data-stat="year_id"]/a/@href').extract()
         for season in season_list:
             yield Request(
                 'https://fbref.com'+season,

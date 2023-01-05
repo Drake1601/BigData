@@ -153,75 +153,75 @@ class ClubItem(scrapy.Item):
         df.to_csv(table_name)
         return df
 
-    class LeagueItem(scrapy.Spider):
-        info = Field()
+class LeagueItem(scrapy.Item):
+    info = Field()
 
 
-        def __init__(self,response):
+    def __init__(self,response):
 
-            info = response.xpath('//*[@id="meta"]/div')
-            if info[0].xpath('.//@class').extract_first() == 'media-item logo':
-                info = info[1]
-            else:
-                info = info[0]
-            self.fields['info'] = self.process_info(info)
+        info = response.xpath('//*[@id="meta"]/div')
+        if info[0].xpath('.//@class').extract_first() == 'media-item logo':
+            info = info[1]
+        else:
+            info = info[0]
+        self.fields['info'] = self.process_info(info)
 
-            regular_season_table = response.xpath('//*[class="stats_table sortable min_width force_mobilize now_sortable sticky_table eq2 re2 le2"]')
-            self.fields['regular_season'] = self.process_stats_table(regular_season_table,f'output/league/regular_season/'+self.fields['info']['LeagueName']+'.csv')
+        regular_season_table = response.xpath('//*[class="stats_table sortable min_width force_mobilize now_sortable sticky_table eq2 re2 le2"]')
+        self.fields['regular_season'] = self.process_stats_table(regular_season_table,f'output/league/regular_season/'+self.fields['info']['LeagueName']+'.csv')
 
-            squad_stats_table = response.xpath('//*[@id="stats_squads_standard_for"]')
-            self.fields['squad_stats'] = self.process_stats_table(squad_stats_table, f'output/league/std/std_'+self.fields['info']['LeagueName']+'.csv')
+        squad_stats_table = response.xpath('//*[@id="stats_squads_standard_for"]')
+        self.fields['squad_stats'] = self.process_stats_table(squad_stats_table, f'output/league/std/std_'+self.fields['info']['LeagueName']+'.csv')
 
-            squad_goalkeeping_table = response.xpath('//*[@id="stats_squads_keeper_for"]')
-            self.field['squad_goal_keeping'] = self.process_stats_table(squad_goalkeeping_table, f'output/league/goalkeeping/'+self.fields['info']['ShortName']+'.csv')
+        squad_goalkeeping_table = response.xpath('//*[@id="stats_squads_keeper_for"]')
+        self.field['squad_goal_keeping'] = self.process_stats_table(squad_goalkeeping_table, f'output/league/goalkeeping/'+self.fields['info']['ShortName']+'.csv')
 
-            # SHOOTING STATS
-            shooting_stats_table = response.xpath('//*[@id="stats_squads_shooting_for"]')
-            self.fields['shooting_stats'] = self.process_stats_table(shooting_stats_table, f'output/league/shooting/shooting_'+self.fields['info']['ShortName']+'.csv')
+        # SHOOTING STATS
+        shooting_stats_table = response.xpath('//*[@id="stats_squads_shooting_for"]')
+        self.fields['shooting_stats'] = self.process_stats_table(shooting_stats_table, f'output/league/shooting/shooting_'+self.fields['info']['ShortName']+'.csv')
 
-            # PASSING STATS
-            passing_stats_table = response.xpath('//*[@id="stats_squads_passing_for"]')
-            self.fields['passing_stats'] = self.process_stats_table(passing_stats_table, f'output/league/passing/passing_'+self.fields['info']['ShortName']+'.csv')
+        # PASSING STATS
+        passing_stats_table = response.xpath('//*[@id="stats_squads_passing_for"]')
+        self.fields['passing_stats'] = self.process_stats_table(passing_stats_table, f'output/league/passing/passing_'+self.fields['info']['ShortName']+'.csv')
 
-            #GOAL AND SHOT CREATION
-            gca_table = response.xpath('//*[@id="stats_squads_gca_for"]')
-            self.fields['gca_stats'] = self.process_stats_table(gca_table, f'output/league/gca/gca_'+self.fields['info']['ShortName']+'.csv')
+        #GOAL AND SHOT CREATION
+        gca_table = response.xpath('//*[@id="stats_squads_gca_for"]')
+        self.fields['gca_stats'] = self.process_stats_table(gca_table, f'output/league/gca/gca_'+self.fields['info']['ShortName']+'.csv')
 
-            #PLAY TIME
-            play_time_table = response.xpath('//*[@id="stats_squads_playing_time_for"]')
-            self.fields['playtime_stats'] = self.process_stats_table(play_time_table, f'output/league/playtime/playtime_'+self.fields['info']['ShortName']+'.csv')
+        #PLAY TIME
+        play_time_table = response.xpath('//*[@id="stats_squads_playing_time_for"]')
+        self.fields['playtime_stats'] = self.process_stats_table(play_time_table, f'output/league/playtime/playtime_'+self.fields['info']['ShortName']+'.csv')
 
 
-        def process_info(self,info:Selector):
-            leaguename = info.xpath('.//h1/text()').extract_first()
-            # print(clubname) 
-            return {
-                'LeagueName': leaguename,
-            }
+    def process_info(self,info:Selector):
+        leaguename = info.xpath('.//h1/text()').extract_first()
+        # print(clubname) 
+        return {
+            'LeagueName': leaguename,
+        }
 
-        def process_stats_table(self, table, table_name):
-            if not table:
-                return None
-                
-            headers = table.xpath('.//thead/tr[last()]/th/text()').extract()
-            rows = table.xpath('.//tbody/tr')
+    def process_stats_table(self, table, table_name):
+        if not table:
+            return None
+            
+        headers = table.xpath('.//thead/tr[last()]/th/text()').extract()
+        rows = table.xpath('.//tbody/tr')
 
-            all_data = []
-            for row in rows:
-                cells = row.xpath('.//th|.//td')
-                data = {}
-                for idx, cell in enumerate(cells):
-                    if cell.xpath('.//@class').extract_first() in ['thead', 'over_header thead']:
-                        print(cell.xpath('.//text()').extract_first())
-                        continue
-                    if cell.xpath('.//a').extract_first():
-                        text = cell.xpath('.//a/text()').extract_first()
-                        href = cell.xpath('.//a/@href').extract_first()
-                        data[headers[idx]] = (text, href)
-                    else:
-                        data[headers[idx]] = cell.xpath('.//text()').extract_first()     
-                all_data.append(data)
+        all_data = []
+        for row in rows:
+            cells = row.xpath('.//th|.//td')
+            data = {}
+            for idx, cell in enumerate(cells):
+                if cell.xpath('.//@class').extract_first() in ['thead', 'over_header thead']:
+                    print(cell.xpath('.//text()').extract_first())
+                    continue
+                if cell.xpath('.//a').extract_first():
+                    text = cell.xpath('.//a/text()').extract_first()
+                    href = cell.xpath('.//a/@href').extract_first()
+                    data[headers[idx]] = (text, href)
+                else:
+                    data[headers[idx]] = cell.xpath('.//text()').extract_first()     
+            all_data.append(data)
 
-            df = pd.DataFrame(all_data)
-            df.to_csv(table_name)
-            return df
+        df = pd.DataFrame(all_data)
+        df.to_csv(table_name)
+        return df
