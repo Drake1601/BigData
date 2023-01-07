@@ -10,18 +10,19 @@ class LeagueSpider(scrapy.Spider):
     allowed_domains = ['fbref.com']
     start_urls = [
         'https://fbref.com/en/comps/12/history/La-Liga-Seasons',
-        'https://fbref.com/en/comps/9/history/Premier-League-Seasons',
-        'https://fbref.com/en/comps/20/history/Bundesliga-Seasons',
-        'https://fbref.com/en/comps/11/history/Serie-A-Seasons',
-        'https://fbref.com/en/comps/13/history/Ligue-1-Seasons'
+        # 'https://fbref.com/en/comps/9/history/Premier-League-Seasons',
+        # 'https://fbref.com/en/comps/20/history/Bundesliga-Seasons',
+        # 'https://fbref.com/en/comps/11/history/Serie-A-Seasons',
+        # 'https://fbref.com/en/comps/13/history/Ligue-1-Seasons'
         ]
 
     def parse(self,response: Response, **kwargs):
-        season_list = response.xpath('//table/tbody/tr/td*[@data-stat="year_id"]/a/@href').extract()
+        season_list = response.xpath('//*[@data-stat="league_name"]/a/@href').extract()
+        print('check',season_list)
         for season in season_list:
             yield Request(
                 'https://fbref.com'+season,
-                callback = self.parse_season_info()
+                callback = self.parse_season_info,
             )
 
     def parse_season_info(self,response:Response, **kwargs):

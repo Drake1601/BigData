@@ -8,7 +8,7 @@ from scrapy.http import Request, Response
 from ..items import ClubItem
 
 class ClubSpider(scrapy.Spider):
-    name = 'league'
+    name = 'club'
     allowed_domains = ['fbref.com']
     start_urls = [
         'https://fbref.com/en/comps/12/history/La-Liga-Seasons',

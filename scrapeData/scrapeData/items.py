@@ -5,7 +5,7 @@
 
 import scrapy
 from scrapy import Field, Selector
-
+import re
 import pandas as pd
 
 from .utils import writeFile
@@ -89,7 +89,7 @@ class ClubItem(scrapy.Item):
     def __init__(self,response):
 
         info = response.xpath('//*[@id="meta"]/div')
-        if info[0].xpath('.//@class').extract_first() == 'media-item logo':
+        if info[0].xpath('.//@class').extract_first() == 'media-item logo loader':
             info = info[1]
         else:
             info = info[0]
@@ -160,43 +160,56 @@ class LeagueItem(scrapy.Item):
     def __init__(self,response):
 
         info = response.xpath('//*[@id="meta"]/div')
-        if info[0].xpath('.//@class').extract_first() == 'media-item logo':
+        if info[0].xpath('.//@class').extract_first() == 'media-item logo loader':
             info = info[1]
         else:
             info = info[0]
+        # print('info',info)
         self.fields['info'] = self.process_info(info)
+        leng = len(self.fields['info']['LeagueName'])
+        league_name = self.fields['info']['LeagueName'][9:(leng-5)]
+        year = self.fields['info']['LeagueName'][:9]
+        tmp = "results"+year+"121_overall"
+        print(tmp)
+        
+        
+        regular_season_table = response.xpath(f'//*[@id={tmp}]')
+        print('checkkk',regular_season_table)
+        self.fields['regular_season'] = self.process_stats_table(regular_season_table,f'output/league/'+league_name+'/regular_season/'+year+'.csv')
 
-        regular_season_table = response.xpath('//*[class="stats_table sortable min_width force_mobilize now_sortable sticky_table eq2 re2 le2"]')
-        self.fields['regular_season'] = self.process_stats_table(regular_season_table,f'output/league/regular_season/'+self.fields['info']['LeagueName']+'.csv')
+        # squad_stats_table = response.xpath('//*[@id="stats_squads_standard_for"]')
+        # self.fields['squad_stats'] = self.process_stats_table(squad_stats_table, f'output/league/'+league_name+'/std_stats/'+year+'.csv')
 
-        squad_stats_table = response.xpath('//*[@id="stats_squads_standard_for"]')
-        self.fields['squad_stats'] = self.process_stats_table(squad_stats_table, f'output/league/std/std_'+self.fields['info']['LeagueName']+'.csv')
+        # squad_goalkeeping_table = response.xpath('//*[@id="stats_squads_keeper_for"]')
+        # self.field['squad_goal_keeping'] = self.process_stats_table(squad_goalkeeping_table, f'output/league/'+league_name+'/goalkeeping/'+year+'.csv')
 
-        squad_goalkeeping_table = response.xpath('//*[@id="stats_squads_keeper_for"]')
-        self.field['squad_goal_keeping'] = self.process_stats_table(squad_goalkeeping_table, f'output/league/goalkeeping/'+self.fields['info']['ShortName']+'.csv')
+        # # SHOOTING STATS
+        # shooting_stats_table = response.xpath('//*[@id="stats_squads_shooting_for"]')
+        # self.fields['shooting_stats'] = self.process_stats_table(shooting_stats_table, f'output/league/'+league_name+'/shooting/'+year+'.csv')
 
-        # SHOOTING STATS
-        shooting_stats_table = response.xpath('//*[@id="stats_squads_shooting_for"]')
-        self.fields['shooting_stats'] = self.process_stats_table(shooting_stats_table, f'output/league/shooting/shooting_'+self.fields['info']['ShortName']+'.csv')
+        # # PASSING STATS
+        # passing_stats_table = response.xpath('//*[@id="stats_squads_passing_for"]')
+        # self.fields['passing_stats'] = self.process_stats_table(passing_stats_table, f'output/league/'+league_name+'/passing/'+year+'.csv')
 
-        # PASSING STATS
-        passing_stats_table = response.xpath('//*[@id="stats_squads_passing_for"]')
-        self.fields['passing_stats'] = self.process_stats_table(passing_stats_table, f'output/league/passing/passing_'+self.fields['info']['ShortName']+'.csv')
-
-        #GOAL AND SHOT CREATION
-        gca_table = response.xpath('//*[@id="stats_squads_gca_for"]')
-        self.fields['gca_stats'] = self.process_stats_table(gca_table, f'output/league/gca/gca_'+self.fields['info']['ShortName']+'.csv')
+        # #GOAL AND SHOT CREATION
+        # gca_table = response.xpath('//*[@id="stats_squads_gca_for"]')
+        # self.fields['gca_stats'] = self.process_stats_table(gca_table, f'output/league/'+league_name+'/gca/'+year+'.csv')
 
         #PLAY TIME
-        play_time_table = response.xpath('//*[@id="stats_squads_playing_time_for"]')
-        self.fields['playtime_stats'] = self.process_stats_table(play_time_table, f'output/league/playtime/playtime_'+self.fields['info']['ShortName']+'.csv')
+        # play_time_table = response.xpath('//*[@id="stats_squads_playing_time_for"]')
+        # self.fields['playtime_stats'] = self.process_stats_table(play_time_table, f'output/league/'+league_name+'/playtime/'+year+'.csv')
 
 
     def process_info(self,info:Selector):
-        leaguename = info.xpath('.//h1/text()').extract_first()
-        # print(clubname) 
+        print('info',info)
+        leaguename = info.xpath('.//h1/text()').extract()
+        print('leaguename',leaguename)
+        # print(type(leaguename[0]))
+        s = leaguename[0]
+        s = re.sub('\s+', '', s)
+        # leaguename = 'Laliga'
         return {
-            'LeagueName': leaguename,
+            'LeagueName': s,
         }
 
     def process_stats_table(self, table, table_name):
@@ -217,7 +230,7 @@ class LeagueItem(scrapy.Item):
                 if cell.xpath('.//a').extract_first():
                     text = cell.xpath('.//a/text()').extract_first()
                     href = cell.xpath('.//a/@href').extract_first()
-                    data[headers[idx]] = (text, href)
+                    data[headers[idx]] = (text)
                 else:
                     data[headers[idx]] = cell.xpath('.//text()').extract_first()     
             all_data.append(data)
