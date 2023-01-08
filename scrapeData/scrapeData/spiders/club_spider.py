@@ -12,14 +12,15 @@ class ClubSpider(scrapy.Spider):
     allowed_domains = ['fbref.com']
     start_urls = [
         'https://fbref.com/en/comps/12/history/La-Liga-Seasons',
-        'https://fbref.com/en/comps/9/history/Premier-League-Seasons',
-        'https://fbref.com/en/comps/20/history/Bundesliga-Seasons',
-        'https://fbref.com/en/comps/11/history/Serie-A-Seasons',
-        'https://fbref.com/en/comps/13/history/Ligue-1-Seasons'
+        # 'https://fbref.com/en/comps/9/history/Premier-League-Seasons',
+        # 'https://fbref.com/en/comps/20/history/Bundesliga-Seasons',
+        # 'https://fbref.com/en/comps/11/history/Serie-A-Seasons',
+        # 'https://fbref.com/en/comps/13/history/Ligue-1-Seasons'
         ]
     
     def parse(self,response: Response, **kwargs):
-        league_list = response.xpath('//table/tbody/tr/td*[@data-stat="year_id"]/a/@href').extract()
+        league_list = response.xpath('//*[@data-stat="league_name"]/a/@href').extract()
+        print(league_list)
         for league in league_list:
             yield Request(
                 'https://fbref.com'+league,
@@ -27,8 +28,8 @@ class ClubSpider(scrapy.Spider):
             )
 
     def parse_club(self,response: Response, **kwargs):
-        club_list = response.xpath('//table/tbody/tr/td*[@data-stat="team"]/a/@href').extract()
-
+        club_list = response.xpath('//*[@data-stat="team"]/a/@href').extract()
+        print('club_list',club_list)
         for club in club_list:
             yield Request(
                 'https://fbref.com' + club,
